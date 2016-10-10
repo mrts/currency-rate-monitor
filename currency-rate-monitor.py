@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 
+import os
 import sys
 import datetime
 import time
@@ -15,6 +16,9 @@ from email.Utils import formatdate
 import smtplib
 
 import requests
+
+BASE_DIR = os.path.dirname(__file__)
+sys.path.append(BASE_DIR)
 
 import conf
 

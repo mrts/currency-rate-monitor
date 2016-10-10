@@ -16,6 +16,11 @@ rates from TransferWise.
 
         python currency-rate-monitor.py
 
+4. Optionally add it to `cron`:
+
+        sudo ln -s `pwd`/currency-rate-monitor.py /etc/cron.daily/currency-rate-monitor
+        run-parts --test /etc/cron.daily
+
 # Example
 
 Here's how the email looks:
