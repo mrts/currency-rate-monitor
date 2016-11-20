@@ -33,21 +33,29 @@ EMAIL_BODY_TEMPLATE="""<html><body>
 <table>
 <tr><td>Start rate ({start_rate_date}):</td><td>1 {from_currency} = {start_rate} {to_currency}</td></tr>
 <tr><td>Period start rate ({period_start_date}):</td><td>1 {from_currency} = {period_start_rate} {to_currency}</td></tr>
+<tr><td>Period minimum rate ({min_rate_date}):</td><td>1 {from_currency} = {min_rate} {to_currency}</td></tr>
+<tr><td>Period maximum rate ({max_rate_date}):</td><td>1 {from_currency} = {max_rate} {to_currency}</td></tr>
 <tr><td>Yesterday's rate ({yesterday_rate_date}):</td><td>1 {from_currency} = {yesterday_rate} {to_currency}</td></tr>
 <tr><td>Today's rate ({today_rate_date}):</td><td>1 {from_currency} = {today_rate} {to_currency}</td></tr>
 <tr><td colspan="2">&nbsp;</td></tr>
 <tr><td>Rate change since start</td><td>{rate_change_since_start} {to_currency}</td></tr>
 <tr><td>Rate change since period start</td><td>{rate_change_since_period_start} {to_currency}</td></tr>
+<tr><td>Rate change compared with minimum</td><td>{rate_change_compared_with_min} {to_currency}</td></tr>
+<tr><td>Rate change compared with maximum</td><td>{rate_change_compared_with_max} {to_currency}</td></tr>
 <tr><td>Rate change since yesterday&nbsp;</td><td>{rate_change_since_yesterday} {to_currency}</td></tr>
 <tr><td colspan="2">&nbsp;</td></tr>
 <tr><td>Amount</td><td>{amount} {from_currency}</td></tr>
 <tr><td>Start value</td><td>{start_value} {to_currency}</td></tr>
 <tr><td>Period start value</td><td>{period_start_value} {to_currency}</td></tr>
+<tr><td>Period minimum value</td><td>{min_value} {to_currency}</td></tr>
+<tr><td>Period maximum value</td><td>{max_value} {to_currency}</td></tr>
 <tr><td>Yesterday's value</td><td>{yesterday_value} {to_currency}</td></tr>
 <tr><td>Today's value</td><td>{today_value} {to_currency}</td></tr>
 <tr><td colspan="2">&nbsp;</td></tr>
 <tr><td>Gain/loss since start</td><td>{gain_since_start} {to_currency}</td></tr>
 <tr><td>Gain/loss since period start</td><td>{gain_since_period_start} {to_currency}</td></tr>
+<tr><td>Gain/loss compared with minimum</td><td>{gain_compared_with_min} {to_currency}</td></tr>
+<tr><td>Gain/loss compared with maximum</td><td>{gain_compared_with_max} {to_currency}</td></tr>
 <tr><td>Gain/loss since yesterday</td><td>{gain_since_yesterday} {to_currency}</td></tr>
 </table>
 <br />
@@ -97,24 +105,41 @@ def create_email_body_html(rates):
     amount = conf.AMOUNT
     from_currency = conf.FROM_CURRENCY
     to_currency = conf.TO_CURRENCY
+
     start_rate = conf.START_RATE
-    start_rate_date = conf.START_RATE_DATE.strftime(EMAIL_DATE_FORMAT)
+    start_rate_date = _to_datestring(conf.START_RATE_DATE)
     period_start_rate = rates[-1].rate
-    period_start_date = rates[-1].date.strftime(EMAIL_DATE_FORMAT)
+    period_start_date = _to_datestring(rates[-1].date)
+    min_rate = min(rates)
+    min_rate_date = _to_datestring(min_rate.date)
+    min_rate = min_rate.rate
+    max_rate = max(rates)
+    max_rate_date = _to_datestring(max_rate.date)
+    max_rate = max_rate.rate
     today_rate = rates[0].rate
-    today_rate_date = rates[0].date.strftime(EMAIL_DATE_FORMAT)
+    today_rate_date = _to_datestring(rates[0].date)
     yesterday_rate = rates[1].rate
-    yesterday_rate_date = rates[1].date.strftime(EMAIL_DATE_FORMAT)
+    yesterday_rate_date = _to_datestring(rates[1].date)
+
     rate_change_since_yesterday = today_rate - yesterday_rate
     rate_change_since_start = today_rate - start_rate
     rate_change_since_period_start = today_rate - period_start_rate
+    rate_change_compared_with_min = today_rate - min_rate
+    rate_change_compared_with_max = today_rate - max_rate
+
     today_value = today_rate * conf.AMOUNT
     start_value = start_rate * conf.AMOUNT
     yesterday_value = yesterday_rate * conf.AMOUNT
     period_start_value = period_start_rate * conf.AMOUNT
+    min_value = min_rate * conf.AMOUNT
+    max_value = max_rate * conf.AMOUNT
+
     gain_since_yesterday = today_value - yesterday_value
     gain_since_start = today_value - start_value
     gain_since_period_start = today_value - period_start_value
+    gain_compared_with_min = today_value - min_value
+    gain_compared_with_max = today_value - max_value
+
     return EMAIL_BODY_TEMPLATE.format(**locals())
 
 def send_mail(server, send_from, send_to, subject, html, img):
@@ -139,6 +164,9 @@ def make_mimeimage(url):
 def _make_rate(rate):
     date = datetime.datetime.strptime(rate['time'], TRANSFERWISE_DATE_FORMAT)
     return Rate(rate['rate'], date)
+
+def _to_datestring(date):
+    return date.strftime(EMAIL_DATE_FORMAT)
 
 if __name__ == '__main__':
     main()
