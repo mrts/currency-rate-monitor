@@ -6,6 +6,9 @@ EMAIL_FROM    = EMAIL_TO
 SMTP_SERVER   = 'smtp.example.com'
 EMAIL_SUBJECT = 'Currency rate monitor'
 
+TRANSFERWISE_CLIENT_ID = 'client-id'
+TRANSFERWISE_CLIENT_SECRET = 'client-secret'
+
 AMOUNT        = 1000
 FROM_CURRENCY = 'EUR'
 TO_CURRENCY   = 'GBP'

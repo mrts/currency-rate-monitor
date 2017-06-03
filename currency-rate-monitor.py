@@ -16,6 +16,7 @@ from email.Utils import formatdate
 import smtplib
 
 import requests
+from requests.auth import HTTPBasicAuth
 
 BASE_DIR = os.path.dirname(__file__)
 sys.path.append(BASE_DIR)
@@ -85,8 +86,20 @@ def main():
 def load_rates(from_date, to_date):
     from_currency = conf.FROM_CURRENCY
     to_currency = conf.TO_CURRENCY
-    rates = requests.get(TRANSFERWISE_URL.format(**locals())).json()
-    return [_make_rate(rate) for rate in rates]
+    rates = requests.get(TRANSFERWISE_URL.format(**locals()),
+            auth=HTTPBasicAuth(
+                conf.TRANSFERWISE_CLIENT_ID,
+                conf.TRANSFERWISE_CLIENT_SECRET
+            )).json()
+    if not rates:
+        raise Error("Empty response from Transferwise")
+    if 'error' in rates:
+        raise Error("Error response from Transferwise: {error}\n"
+                "{error_description}".format(**rates))
+    if not isinstance(rates, list) or not 'time' in rates[0]:
+        raise Error("Invalid response from Transferwise:\n{}"
+                .format(rates))
+    return [make_rate(rate) for rate in rates]
 
 def make_chart(rates):
     data = [rate.rate for rate in rates]
@@ -107,19 +120,19 @@ def create_email_body_html(rates):
     to_currency = conf.TO_CURRENCY
 
     start_rate = conf.START_RATE
-    start_rate_date = _to_datestring(conf.START_RATE_DATE)
+    start_rate_date = to_datestring(conf.START_RATE_DATE)
     period_start_rate = rates[-1].rate
-    period_start_date = _to_datestring(rates[-1].date)
+    period_start_date = to_datestring(rates[-1].date)
     min_rate = min(rates)
-    min_rate_date = _to_datestring(min_rate.date)
+    min_rate_date = to_datestring(min_rate.date)
     min_rate = min_rate.rate
     max_rate = max(rates)
-    max_rate_date = _to_datestring(max_rate.date)
+    max_rate_date = to_datestring(max_rate.date)
     max_rate = max_rate.rate
     today_rate = rates[0].rate
-    today_rate_date = _to_datestring(rates[0].date)
+    today_rate_date = to_datestring(rates[0].date)
     yesterday_rate = rates[1].rate
-    yesterday_rate_date = _to_datestring(rates[1].date)
+    yesterday_rate_date = to_datestring(rates[1].date)
 
     rate_change_since_yesterday = today_rate - yesterday_rate
     rate_change_since_start = today_rate - start_rate
@@ -161,12 +174,21 @@ def make_mimeimage(url):
     img.add_header('Content-ID', '<image1>')
     return img
 
-def _make_rate(rate):
+def make_rate(rate):
     date = datetime.datetime.strptime(rate['time'], TRANSFERWISE_DATE_FORMAT)
     return Rate(rate['rate'], date)
 
-def _to_datestring(date):
+def to_datestring(date):
     return date.strftime(EMAIL_DATE_FORMAT)
 
+class Error(RuntimeError):
+    pass
+
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except requests.ConnectionError as error:
+        print("Connection error, need internet access to fetch rates\n\n"
+                + str(error))
+    except Error as error:
+        print("ERROR: " + str(error))
