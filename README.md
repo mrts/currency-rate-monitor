@@ -4,12 +4,12 @@ Python app for monitoring currency rates and configured amount value changes.
 Sends statistics and a graph with rate history to configured email. Fetches
 rates from TransferWise.
 
-# TransferWise API key
+## TransferWise API key
 
 You need an [affiliate API key](https://api-docs.transferwise.com/v1/api-basics/authentication-and-headers#authentication-for-affiliates)
 to get access to the TransferWise rates API that the script uses.
 
-# Usage
+## Usage
 
 1. Setup requirements and configuration:
 
@@ -26,7 +26,7 @@ to get access to the TransferWise rates API that the script uses.
         sudo ln -s `pwd`/currency-rate-monitor.py /etc/cron.daily/currency-rate-monitor
         run-parts --test /etc/cron.daily
 
-# Example
+## Example
 
 Here's how the email looks:
 
