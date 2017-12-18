@@ -4,6 +4,10 @@ DAYS_BACK     = 15
 EMAIL_TO      = 'you@example.com'
 EMAIL_FROM    = EMAIL_TO
 SMTP_SERVER   = 'smtp.example.com'
+SMTP_PORT     = 587
+SMTP_USE_TLS  = True
+SMTP_USERNAME = 'user'
+SMTP_PASSWORD = 'password'
 EMAIL_SUBJECT = 'Currency rate monitor'
 
 TRANSFERWISE_CLIENT_ID = 'client-id'

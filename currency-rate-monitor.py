@@ -73,8 +73,7 @@ def main():
     chart_url = make_chart(rates)
     image = make_mimeimage(chart_url)
     html = create_email_body_html(rates)
-    result = send_mail(conf.SMTP_SERVER, conf.EMAIL_FROM, conf.EMAIL_TO,
-            conf.EMAIL_SUBJECT, html, image)
+    result = send_mail(conf.EMAIL_FROM, conf.EMAIL_TO, conf.EMAIL_SUBJECT, html, image)
     if result:
         for recp in result.keys():
             print("Send mail to {} failed: {}:{}".format(conf.EMAIL_TO,
@@ -155,7 +154,7 @@ def create_email_body_html(rates):
 
     return EMAIL_BODY_TEMPLATE.format(**locals())
 
-def send_mail(server, send_from, send_to, subject, html, img):
+def send_mail(send_from, send_to, subject, html, img):
     msg = MIMEMultipart()
     msg['From'] = send_from
     msg['To'] = send_to
@@ -163,10 +162,18 @@ def send_mail(server, send_from, send_to, subject, html, img):
     msg['Date'] = formatdate(time.time(), localtime=True)
     msg.attach(MIMEText(html, 'html', 'utf-8'))
     msg.attach(img)
-    smtp = smtplib.SMTP(server)
+    smtp = make_smtp()
     result = smtp.sendmail(send_from, [send_to, send_from], msg.as_string())
     smtp.close()
     return result
+
+def make_smtp():
+    smtp = smtplib.SMTP(conf.SMTP_SERVER,
+            port=conf.SMTP_PORT if hasattr(conf, 'SMTP_PORT') else None)
+    if conf.SMTP_USE_TLS:
+        smtp.starttls()
+        smtp.login(conf.SMTP_USERNAME, conf.SMTP_PASSWORD)
+    return smtp
 
 def make_mimeimage(url):
     image_data = requests.get(url)
